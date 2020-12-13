@@ -4,6 +4,7 @@
 # http://hvornum.se/arch.html
 # https://github.com/helmuthdu/aui
 # https://disconnected.systems/blog/archlinux-installer/#the-complete-installer-script
+# https://gist.github.com/Phaeilo/541f0361678ee07bf594 first boot script
 
 loadkeys sv-latin1
 timedatectl set-ntp true
@@ -71,9 +72,9 @@ configure_time() {
 
 configure_localization() {
   # uncomment lines in /etc/locale
-  arch_chroot "sed -i '/en_US.UTF-8/s/^#//g' /etc/locale.gen"
-  arch_chroot "sed -i '/sv_SE.UTF-8/s/^#//g' /etc/locale.gen"
-  arch_chroot "locale-gen"
+  arch-chroot /mnt sed -i "/en_US.UTF-8/s/^#//g" /etc/locale.gen
+  arch-chroot /mnt sed -i "/sv_SE.UTF-8/s/^#//g" /etc/locale.gen
+  arch-chroot locale-gen
 
   # set language
   echo "LANG=en_US.UTF-8" >> /mnt/etc/locale.conf
@@ -88,7 +89,9 @@ configure_localization() {
   echo "LC_IDENTIFICATION=sv_SE.UTF-8" >> /mnt/etc/locale.conf
 
   # set keyboard map
-  echo "KEYMAP=sv-latin1" > /mnt/etc/vconsole.conf
+  #echo "KEYMAP=sv-latin1" > /mnt/etc/vconsole.conf
+  localectl set-keymap sv-latin1
+  cp /etc/vconsole.conf /mnt/etc/vconsole.conf
 }
 
 configure_network() {
@@ -118,8 +121,7 @@ add_user() {
 
 install_xorg() {
   arch-chroot /mnt pacman -S --noconfirm xorg-server
-
-  echo "setxkbmap se" > /mnt/etc/profile.d/layout.sh
+  cp /etc/X11/xorg.conf.d/00-keyboard.conf /mnt/etc/X11/xorg.conf.d/00-keyboard.conf
 }
 
 install_xfce() {
