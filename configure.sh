@@ -1,11 +1,12 @@
 #!/bin/bash
 
-echo "User and root"
 read -p 'Hostname: ' hostname
 read -p 'Username: ' username
 read -s -p 'Password: ' password
 
 configure_network() {
+  hostnamectl set-hostname ${hostname}
+
   configure_ethernet() {
     # get device
     device=$(networkctl list | grep ether | awk '{ print $2 }')
@@ -20,9 +21,6 @@ EOF
   }
 
   configure_ethernet
-
-  hostnamectl set-hostname ${hostname}
-
   systemctl enable systemd-resolved
   systemctl start systemd-resolved
 
@@ -73,13 +71,14 @@ configure_user() {
 
 install_desktop() {
   pacman -S --noconfirm \
-    xorg-server ffmpeg \
+    xorg-server \
     xfce4 lightdm lightdm-gtk-greeter gvfs \
     xfce4-taskmanager xfce4-notifyd xfce4-screensaver xfce4-screenshooter \
     xfce4-battery-plugin \
     xfce4-pulseaudio-plugin pavucontrol pulseaudio \
     thunar-archive-plugin \
-    mousepad
+    mousepad \
+    ffmpeg
 
   pacman -Rs --noconfirm xfwm4-themes
 
@@ -91,8 +90,6 @@ install_desktop() {
   localectl set-x11-keymap se
   systemctl enable lightdm
 }
-
-
 
 configure_network
 configure_time

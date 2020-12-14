@@ -3,7 +3,7 @@
 # initialize
 loadkeys sv-latin1
 timedatectl set-ntp true
-read -s -p 'Root password: ' password
+read -s -p 'Root password: ' PASSWORD
 
 # create partitions
 parted /dev/sda mklabel gpt
@@ -32,7 +32,7 @@ arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 genfstab -U /mnt >> /mnt/etc/fstab
 
 # root pasword
-echo "root:$password" | chpasswd --root /mnt
+echo "root:$PASSWORD" | chpasswd --root /mnt
 
 # hwclock
 hwclock --systohc --utc
