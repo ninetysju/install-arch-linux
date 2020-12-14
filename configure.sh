@@ -6,26 +6,6 @@ read -s -p 'Password: ' password
 
 configure_network() {
   hostnamectl set-hostname ${hostname}
-
-  configure_ethernet() {
-    # get device
-    device=$(networkctl list | grep ether | awk '{ print $2 }')
-    echo "Configuring ${device}"
-    cat <<EOF > /etc/systemd/network/20-wired.network
-[Match]
-Name=${device}
-
-[Network]
-DHCP=yes
-EOF
-  }
-
-  configure_ethernet
-  systemctl enable systemd-resolved
-  systemctl start systemd-resolved
-
-  systemctl enable systemd-networkd
-  systemctl start systemd-networkd
 }
 
 configure_time() {

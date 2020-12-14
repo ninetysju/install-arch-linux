@@ -3,7 +3,10 @@
 # initialize
 loadkeys sv-latin1
 timedatectl set-ntp true
+
 read -s -p 'Root password: ' PASSWORD
+# get wired network device
+WIRED_DEVICE=$(networkctl list | grep ether | awk '{ print $2 }')
 
 # create partitions
 parted /dev/sda mklabel gpt
@@ -36,6 +39,19 @@ echo "root:$PASSWORD" | chpasswd --root /mnt
 
 # hwclock
 hwclock --systohc --utc
+
+# setup wired network
+cat <<EOF > /mnt/etc/systemd/network/20-wired.network
+[Match]
+Name=${WIRED_DEVICE}
+
+[Network]
+DHCP=yes
+EOF
+
+# enable network services
+arch-chroot /mnt systemctl enable systemd-resolved
+arch-chroot /mnt systemctl enable systemd-networkd
 
 # set locale, keymap, timezone and hostname
 systemd-firstboot --root=/mnt --locale=en_US.UTF-8 --keymap=sv-latin1 --timezone=Europe/Stockholm --hostname=archlinux
