@@ -50,22 +50,20 @@ configure_user() {
 }
 
 install_desktop() {
+
   pacman -S --noconfirm \
-    xorg-server \
+    xorg-server xorg-xkill \
     xfce4 lightdm lightdm-gtk-greeter gvfs \
     xfce4-taskmanager xfce4-notifyd xfce4-screensaver xfce4-screenshooter \
+    nm-connection-editor network-manager-applet \
     xfce4-battery-plugin \
     xfce4-pulseaudio-plugin pavucontrol pulseaudio \
     thunar-archive-plugin \
-    mousepad \
+    mousepad xarchiver ristretto qpdfview \
+    ufw gufw \
     ffmpeg
 
   pacman -Rs --noconfirm xfwm4-themes
-
-  # graphical network
-  pacman -S --noconfirm networkmanager nm-connection-editor network-manager-applet
-  systemctl enable NetworkManager.service
-  systemctl start NetworkManager.service
 
   localectl set-x11-keymap se
   systemctl enable lightdm

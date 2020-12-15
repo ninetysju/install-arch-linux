@@ -40,20 +40,39 @@ echo "root:$PASSWORD" | chpasswd --root /mnt
 # hwclock
 hwclock --systohc --utc
 
-# setup wired network
-cat <<EOF > /mnt/etc/systemd/network/20-wired.network
-[Match]
-Name=${WIRED_DEVICE}
-
-[Network]
-DHCP=yes
-EOF
-
-# enable network services
+# setup network
+arch-chroot /mnt pacman -S --noconfirm networkmanager
+arch-chroot /mnt systemctl enable NetworkManager.service
 arch-chroot /mnt systemctl enable systemd-resolved
-arch-chroot /mnt systemctl enable systemd-networkd
 
 # set locale, keymap, timezone and hostname
 systemd-firstboot --root=/mnt --locale=en_US.UTF-8 --keymap=sv-latin1 --timezone=Europe/Stockholm --hostname=archlinux
 
 umount -R /mnt; reboot
+
+#create_system_legacy
+create_system_legacy() {
+  # unmount
+  umount /dev/sda
+
+  # create partitions
+  parted /dev/sda mklabel msdos
+  parted /dev/sda mkpart primary ext4 1MiB 100%
+
+  # format partitions
+  mkfs.ext4 /dev/sda1
+
+  # mount
+  mount /dev/sda1 /mnt
+  mkdir -p /mnt/boot
+
+  # install base
+  pacstrap /mnt base linux linux-firmware grub nano
+
+  # configure grub
+  arch-chroot /mnt grub-install --target=i386-pc /dev/sda
+  arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+
+  # generate fstab
+  genfstab -U /mnt >> /mnt/etc/fstab
+}

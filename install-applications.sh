@@ -5,7 +5,7 @@ read -p 'Name: ' NAME
 read -p 'Email: ' EMAIL
 read -p 'Device: ' DEVICE
 
-# Add multilib support
+# Enable multilib support
 sudo sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
 
 sudo pacman -Syu --noconfirm
@@ -54,6 +54,7 @@ install_development() {
   git config --global user.email $EMAIL
 
   echo "Create SSH Key"
+  sudo pacman -S --noconfirm openssh
   ssh-keygen -t rsa -b 4096 -C "$NAME ($DEVICE) <$EMAIL>"
 }
 
