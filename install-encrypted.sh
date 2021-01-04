@@ -26,13 +26,6 @@ create_partitions() {
 configure_root_partition() {
   # https://serverfault.com/questions/513605/how-to-non-interactively-supply-a-passphrase-to-dmcrypt-luksformat
 
-  #cryptsetup luksFormat /dev/sda2
-  #cryptsetup open /dev/sda2 cryptroot
-  #mkfs.ext4 /dev/mapper/cryptroot
-  #mount /dev/mapper/cryptroot /mnt
-  #mkfs.ext4 /dev/sda2
-  #mount /dev/sda2 /mnt
-
   if [ ${ENCRYPTION} = true ] ; then
     cryptsetup luksFormat /dev/sda2
     cryptsetup open /dev/sda2 cryptroot
@@ -63,13 +56,6 @@ generate_fstab() {
 
 # Configure mkinitcpio
 configure_mkinitcpio() {
-
-  #INIT_HOOKS="HOOKS=(base udev autodetect modconf block keyboard encrypt filesystems fsck)"
-  #sed -i "s|^HOOKS=.*|$INIT_HOOKS|" /mnt/etc/mkinitcpio.conf
-
-  # Generate initramfs boot images
-  #arch-chroot /mnt mkinitcpio -P
-
   if [ ${ENCRYPTION} = true ] ; then
     INIT_HOOKS="HOOKS=(base udev autodetect modconf block keyboard encrypt filesystems fsck)"
     sed -i "s|^HOOKS=.*|$INIT_HOOKS|" /mnt/etc/mkinitcpio.conf
@@ -168,8 +154,6 @@ EOF
 
 install_bootloader() {
 arch-chroot /mnt bootctl install
-#FS_UUID=$(blkid -o value -s UUID /dev/sda2)
-#options cryptdevice=UUID=${FS_UUID:cryptroot root=/dev/mapper/cryptroot rw
 
 if [ ${ENCRYPTION} = true ] ; then
   FS_UUID=$(blkid -o value -s UUID /dev/sda2)
@@ -177,7 +161,6 @@ if [ ${ENCRYPTION} = true ] ; then
 else
   OPTIONS="root=/dev/sda2"
 fi
-
 
 # Arch Linux config
 cat > /mnt/boot/loader/entries/arch-linux.conf << EOF
