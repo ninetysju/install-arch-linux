@@ -12,6 +12,7 @@ read -p 'Username: ' USERNAME
 read -s -p 'Password: ' PASSWORD
 echo
 read -p 'Hostname: ' HOSTNAME
+read -p "Encryption (true/false):  " ENCRYPTION
 
 # Create partitions
 create_partitions() {
@@ -23,12 +24,24 @@ create_partitions() {
 
 # Prepare root partition
 configure_root_partition() {
+  # https://serverfault.com/questions/513605/how-to-non-interactively-supply-a-passphrase-to-dmcrypt-luksformat
+
   #cryptsetup luksFormat /dev/sda2
   #cryptsetup open /dev/sda2 cryptroot
   #mkfs.ext4 /dev/mapper/cryptroot
   #mount /dev/mapper/cryptroot /mnt
-  mkfs.ext4 /dev/sda2
-  mount /dev/sda2 /mnt
+  #mkfs.ext4 /dev/sda2
+  #mount /dev/sda2 /mnt
+
+  if [ ${ENCRYPTION} = true ] ; then
+    cryptsetup luksFormat /dev/sda2
+    cryptsetup open /dev/sda2 cryptroot
+    mkfs.ext4 /dev/mapper/cryptroot
+    mount /dev/mapper/cryptroot /mnt
+  else
+    mkfs.ext4 /dev/sda2
+    mount /dev/sda2 /mnt
+  fi
 }
 
 # Prepare boot partition
@@ -50,11 +63,18 @@ generate_fstab() {
 
 # Configure mkinitcpio
 configure_mkinitcpio() {
+
   #INIT_HOOKS="HOOKS=(base udev autodetect modconf block keyboard encrypt filesystems fsck)"
   #sed -i "s|^HOOKS=.*|$INIT_HOOKS|" /mnt/etc/mkinitcpio.conf
 
   # Generate initramfs boot images
-  arch-chroot /mnt mkinitcpio -P
+  #arch-chroot /mnt mkinitcpio -P
+
+  if [ ${ENCRYPTION} = true ] ; then
+    INIT_HOOKS="HOOKS=(base udev autodetect modconf block keyboard encrypt filesystems fsck)"
+    sed -i "s|^HOOKS=.*|$INIT_HOOKS|" /mnt/etc/mkinitcpio.conf
+    arch-chroot /mnt mkinitcpio -P
+  fi
 }
 
 configure_users() {
@@ -148,7 +168,16 @@ EOF
 
 install_bootloader() {
 arch-chroot /mnt bootctl install
-#fs_uuid=$(blkid -o value -s UUID /dev/sdb1)
+#FS_UUID=$(blkid -o value -s UUID /dev/sda2)
+#options cryptdevice=UUID=${FS_UUID:cryptroot root=/dev/mapper/cryptroot rw
+
+if [ ${ENCRYPTION} = true ] ; then
+  FS_UUID=$(blkid -o value -s UUID /dev/sda2)
+  OPTIONS="cryptdevice=UUID=${FS_UUID}:cryptroot root=/dev/mapper/cryptroot rw"
+else
+  OPTIONS="root=/dev/sda2"
+fi
+
 
 # Arch Linux config
 cat > /mnt/boot/loader/entries/arch-linux.conf << EOF
@@ -156,7 +185,7 @@ title    Arch Linux
 linux    /vmlinuz-linux
 initrd   /intel-ucode.img
 initrd   /initramfs-linux.img
-options  root=/dev/sda2
+options  ${OPTIONS}
 EOF
 
 # Bootctl config
@@ -229,11 +258,11 @@ configure_localization
 configure_network
 configure_users
 
-#configure_mkinitcpio
+configure_mkinitcpio
 install_microcode
 install_bootloader
 
-#install_xfce
+install_xfce
 configure_firstboot
 
 umount -R /mnt; reboot
