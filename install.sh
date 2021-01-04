@@ -11,7 +11,7 @@ WIRED_DEVICE=$(networkctl list | grep ether | awk '{ print $2 }')
 # create partitions
 parted /dev/sda mklabel gpt
 parted /dev/sda mkpart efi fat32 1MiB 513MiB
-# parted set 1 boot on
+# parted /dev/sda set 1 boot on
 parted /dev/sda mkpart root ext4 513MiB 100%
 
 # format partitions
