@@ -43,21 +43,55 @@ genfstab -U /mnt >> /mnt/etc/fstab
 
 # chroot
 arch-chroot /mnt <<- EOF
-  hwclock --systohc --utc
 
-  # configure network
-  pacman -S networkmanager --noconfirm
-  systemctl enable NetworkManager
+# configure time
+ln -sf /usr/share/zoneinfo/Europe/Stockholm /etc/localtime
+hwclock --systohc --utc
 
-  # configure users
-  useradd -m -G wheel ${USERNAME}
-  echo "${USERNAME}:${PASSWORD}" | chpasswd --root /
-  echo "root:${PASSWORD}" | chpasswd --root /
-  pacman -S --noconfirm sudo
-  sed -i '/%wheel ALL=(ALL) ALL/s/^#//' /etc/sudoers
+# configure localization
+sed -i "/en_US.UTF-8/s/^#//g" /etc/locale.gen
+sed -i "/sv_SE.UTF-8/s/^#//g" /etc/locale.gen
+locale-gen
+
+cat > /etc/locale.conf << EOC
+LANG=en_US.UTF-8
+LC_NUMERIC=sv_SE.UTF-8
+LC_TIME=sv_SE.UTF-8
+LC_MONETARY=sv_SE.UTF-8
+LC_PAPER=sv_SE.UTF-8
+LC_NAME=sv_SE.UTF-8
+LC_ADDRESS=sv_SE.UTF-8
+LC_TELEPHONE=sv_SE.UTF-8
+LC_MEASUREMENT=sv_SE.UTF-8
+LC_IDENTIFICATION=sv_SE.UTF-8
+EOC
+
+cat > /etc/vconsole.conf << EOC
+KEYMAP=sv-latin1
+EOC
+
+# configure network
+pacman -S networkmanager --noconfirm
+systemctl enable NetworkManager
+
+cat > /etc/hostname << EOC
+${HOSTNAME}
+EOC
+
+cat >> /etc/hosts << EOC
+127.0.0.1   localhost
+::1         localhost
+127.0.1.1   ${HOSTNAME}.local ${HOSTNAME}
+EOC
+
+# configure users
+useradd -m -G wheel ${USERNAME}
+echo "${USERNAME}:${PASSWORD}" | chpasswd --root /
+echo "root:${PASSWORD}" | chpasswd --root /
+pacman -S --noconfirm sudo
+sed -i '/%wheel ALL=(ALL) ALL/s/^#//' /etc/sudoers
+
 EOF
-
-systemd-firstboot --root=/mnt --locale=en_US.UTF-8 --keymap=sv-latin1 --timezone=Europe/Stockholm --hostname=${HOSTNAME}
 
 # configure mkinitcpio
 # INIT_HOOKS="HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)"
@@ -127,5 +161,40 @@ install_grub() {
 
 install_bootctl
 #install_grub
+
+# First boot script
+configure_firstboot() {
+# Service
+cat > /mnt/etc/systemd/system/firstboot.service << EOF
+[Unit]
+Description=Configure installation
+Before=getty.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/firstboot.sh
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Script
+cat > /mnt/usr/local/bin/firstboot.sh << EOF
+#!/bin/sh
+
+timedatectl set-ntp true
+
+# Cleanup
+systemctl disable firstboot.service
+rm /etc/systemd/system/firstboot.service
+rm /usr/local/bin/firstboot.sh
+
+#reboot
+EOF
+
+arch-chroot /mnt systemctl enable firstboot.service
+arch-chroot /mnt chmod 744 /usr/local/bin/firstboot.sh
+}
+configure_firstboot
 
 echo "You are now ready to reboot, 'umount -R /mnt; reboot'"
