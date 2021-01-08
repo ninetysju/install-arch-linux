@@ -5,29 +5,30 @@ You should read https://wiki.archlinux.org/index.php/installation_guide before u
 
 1. Install base system
     ```bash
-      $ sh /install.sh > install.sh
-      $ sh install.sh
+      $ curl -L /install-base.sh > install-base.sh
+      $ sh install-base.sh
     ```
 
 2. Configure and install desktop(xfce), if wireless run `$ nmtui` first
     ```bash
-      $ sh /configure.sh > configure.sh
-      $ sh configure.sh
+      $ curl -L /install-xfce.sh > install-xfce.sh
+      $ sh install-xfce.sh
     ```
 
 3. Configure xfce
     ```bash
-      $ sh /configure-xfce.sh > configure-xfce.sh
+      $ curl -L /configure-xfce.sh > configure-xfce.sh
       $ sh configure-xfce.sh
     ```
 
 4. Install applications
     ```bash
-      $ sh /install-applications.sh > install-applications.sh
+      $ curl -L /install-applications.sh > install-applications.sh
       $ sh install-applications.sh
     ```
 
 5. Remove scripts
+    `~/install-xfce.sh`
     `~/configure-xfce.sh`
     `~/install-applications.sh`
 
@@ -80,5 +81,3 @@ For use with xfce4-appfinder:
 - Type: Regular Expression
 - Pattern: ^([0-9]|\(|\.).*
 - Command: /bin/sh ~/math.sh \0
-
-

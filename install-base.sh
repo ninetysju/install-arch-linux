@@ -81,7 +81,7 @@ EOC
 cat >> /etc/hosts << EOC
 127.0.0.1   localhost
 ::1         localhost
-127.0.1.1   ${HOSTNAME}.local ${HOSTNAME}
+127.0.1.1   ${HOSTNAME}.localdomain ${HOSTNAME}
 EOC
 
 # configure users
@@ -197,4 +197,4 @@ arch-chroot /mnt chmod 744 /usr/local/bin/firstboot.sh
 }
 configure_firstboot
 
-echo "You are now ready to reboot, 'umount -R /mnt; reboot'"
+echo "Arch Linux is now installed on ${DEVICE}. You are ready to reboot, 'umount -R /mnt; reboot'"
