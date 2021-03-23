@@ -1,7 +1,7 @@
 #!/bin/bash
 
 sudo pacman -S --noconfirm \
-  xorg-server xorg-xkill \
+  xorg-server \
   xfce4 lightdm lightdm-gtk-greeter \
   xfce4-taskmanager xfce4-notifyd xfce4-screensaver xfce4-screenshooter \
   xfce4-pulseaudio-plugin pavucontrol pulseaudio \
@@ -14,5 +14,6 @@ sudo pacman -S --noconfirm \
 
 sudo pacman -Rs --noconfirm xfwm4-themes
 
+sudo timedatectl set-ntp true
 sudo localectl set-x11-keymap se
 sudo systemctl enable lightdm
