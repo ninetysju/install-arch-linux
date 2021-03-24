@@ -8,6 +8,12 @@ read -p "Password: " PASSWORD
 read -p "Hostname: " HOSTNAME
 read -p "Encryption (true/false): " ENCRYPTION
 
+if [ -n "$(lscpu | grep GenuineIntel)" ]; then
+  CPU_VENDOR="intel"
+elif [ -n "$(lscpu | grep AuthenticAMD)" ]; then
+  CPU_VENDOR="amd"
+fi
+
 # Initialize
 loadkeys sv-latin1
 timedatectl set-ntp true
@@ -101,6 +107,7 @@ fi
 
 # Configure boot loader (bootctl)
 arch-chroot /mnt bootctl install
+arch-chroot /mnt pacman -S --noconfirm ${CPU_VENDOR}-ucode
 
 if [ ${ENCRYPTION} = true ] ; then
   FS_UUID=$(blkid -o value -s UUID /dev/${PARTITION_ROOT})
@@ -112,6 +119,7 @@ fi
 cat > /mnt/boot/loader/entries/arch-linux.conf << EOF
 title    Arch Linux
 linux    /vmlinuz-linux
+initrd   /${CPU_VENDOR}-ucode.img
 initrd   /initramfs-linux.img
 options  ${BOOTCTL_OPTIONS}
 EOF
